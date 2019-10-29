@@ -34,6 +34,7 @@ example_environment = resume_env()
 use_best_model = False
 
 environments = []
+
 for crrt_simu in range(number_servers):
     environments.append(RemoteEnvironmentClient(
         example_environment, verbose=0, port=ports_start + crrt_simu, host=host
@@ -43,6 +44,8 @@ if use_best_model:
     evaluation_environment = environments.pop()
 else:
     evaluation_environment = None
+    
+environments[0].switch_on_action_plotting()
 
 network = [dict(type='dense', size=512), dict(type='dense', size=512)]
 

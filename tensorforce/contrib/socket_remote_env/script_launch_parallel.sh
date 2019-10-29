@@ -65,7 +65,7 @@ tmux send-keys -t 1 "htop" C-m
 
 echo "Launching the servers. This takes a few seconds..."
 tmux send-keys -t 3 "python3 launch_servers.py -p $2 -n $3"  C-m
-let "n_sec_sleep = 10 * $3"
+let "n_sec_sleep = 1 * $3"
 echo "Wait $n_sec_sleep secs for servers to start..."
 sleep $n_sec_sleep
 

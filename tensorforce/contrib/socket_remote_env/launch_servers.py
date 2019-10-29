@@ -53,7 +53,7 @@ for rank, port in enumerate(list_ports):
     proc = Process(target=launch_one_server, args=(rank, host, port))
     proc.start()
     processes.append(proc)
-    time.sleep(2.0)  # just to avoid collisions in the terminal printing
+    time.sleep(0.5)  # just to avoid collisions in the terminal printing
 
 print("all processes started, ready to serve...")
 

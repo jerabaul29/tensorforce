@@ -2,6 +2,10 @@ from tensorforce.environments import Environment
 import socket
 from echo_server import EchoServer
 
+from PltDynamicPlot import PltDynamicPlot
+from NpRingBuffer import NpRingBuffer
+import numpy as np
+
 
 class RemoteEnvironmentClient(Environment):
     """Used to communicate with a RemoteEnvironmentServer. The idea is that the pair
@@ -54,9 +58,23 @@ class RemoteEnvironmentClient(Environment):
         self.episode = 0
         self.step = 0
 
+        self.perform_plotting = False
+    
     def __del__(self):
         if self.valid_socket:
-            self.close()
+            self.close()        
+
+    def switch_on_action_plotting(self,
+                                frequency_plot_execute=1,
+                                length_buffers_execute=20):
+        
+        self.perform_plotting = True
+
+        self.frequency_plot_execute = frequency_plot_execute
+        self.length_buffers_execute = length_buffers_execute
+        self.n_execute_left_plot = self.frequency_plot_execute
+        self.buffer_actions = NpRingBuffer(length=self.length_buffers_execute, shape=(2,))
+        self.plot_actions = PltDynamicPlot(min_x=0, max_x=length_buffers_execute, min_y=-5, max_y=5, n_curves=2)
 
     def states(self):
         return self.example_environment.states()
@@ -89,6 +107,9 @@ class RemoteEnvironmentClient(Environment):
         return(init_state)
 
     def execute(self, actions):
+        if self.perform_plotting:
+            self.buffer_actions.push(np.array([actions, 2]))  # 2 here is just to illustrate that can handle 1D action
+
         # send the control message
         self.communicate_socket("CONTROL", actions)
 
@@ -106,6 +127,21 @@ class RemoteEnvironmentClient(Environment):
 
         # now we have done one more step
         self.step += 1
+
+        if self.perform_plotting:
+            if self.n_execute_left_plot <= 0:
+                self.n_execute_left_plot = self.frequency_plot_execute
+
+                # plot the action
+                number_of_channels = self.buffer_actions.shape[0]
+                x = np.arange(0, self.length_buffers_execute, 1)
+                x = np.tile(x, (number_of_channels, 1))
+                y = self.buffer_actions.get().transpose()
+                print(x)
+                print(y)
+                self.plot_actions.update(x, y)
+
+            self.n_execute_left_plot -= 1
 
         if self.verbose > 1:
             print("execute performed; state, terminal, reward:")
